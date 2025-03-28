@@ -5,14 +5,11 @@
 このプロジェクトは、ESP32マイコンボードを使用したラジコンコントローラーのコードです。ESP-NOWプロトコルを使用して、ラジコン本体との間でデータを送受信します。
 
 ## ファイル構成
-ControllerProject/
-├── platformio.ini  # PlatformIOの設定ファイル
-└── src/
-├── ESPNowManager.cpp  # ESP-NOW通信の管理クラス
-├── ESPNowManager.h    # ESP-NOW通信の管理クラスのヘッダーファイル
-├── main.cpp           # メインのプログラムファイル
-├── Secret.cpp         # MACアドレスの定義ファイル
-└── Secret.h           # MACアドレスの定義ファイルヘッダー
+* `platformio.ini`: PlatformIOプロジェクトの設定ファイル
+* `src/`
+    * `main.cpp`: メインのプログラムファイル。ESP-NOWの初期化、データの送受信などを実行します。
+    * `ESPNowManager.cpp`: ESP-NOW通信の初期化、ペアリング処理を管理するクラスの実装
+    * `ESPNowManager.h`: ESPNowManagerクラスのヘッダーファイル
 
 ## 各ファイルの説明
 
@@ -25,7 +22,6 @@ ControllerProject/
     * 各種スイッチ、スライドボリュームの読み取り
     * LED制御
     * バッテリー電圧の監視
-* `src/Secret.cpp`、`src/Secret.h`: 通信相手のMACアドレスを定義したファイルです。
 
 ## 開発環境
 
