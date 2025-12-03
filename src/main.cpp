@@ -11,9 +11,9 @@ int receivedDataLength = 0; // 受信データの長さを保存します
 const int SW1 = 15, SW2 = 16, SW3 = 17, SW4 = 18, SW5 = 14, SW6 = 25, SW7 = 26, SW8 = 27;
 const int SLD_SW1_1 = 32, SLD_SW1_2 = 2, SLD_SW2_1 = 33, SLD_SW2_2 = 4;
 const int SLD_SW3_1 = 22, SLD_SW3_2 = 5, SLD_SW4_1 = 23, SLD_SW4_2 = 19;
-const int BLE_LED = 21, LED_LED = 13;
-const int blueLedChannel = 0, ledLedChannel = 1; // LEDCのチャンネル番号を定義します
-const int ANALOG_READ1 = 34, ANALOG_READ2 = 36, BATTERY_READ = 35; // アナログ入力ピンを定義します
+const int BLE_LED = 21, WHITE_LED = 13;
+const int blueLedChannel = 0, whiteLedChannel = 1; // LEDCのチャンネル番号を定義します
+const int ANALOG_READ1 = 34, ANALOG_READ2 = 36, BATTERY= 35; // アナログ入力ピンを定義します
 
 /* 関数宣言 */
 int getVoltage(); // 電源電圧を取得します
@@ -96,32 +96,33 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis; // 前回の時間を更新します
     battery_value = getVoltage(); // 電源電圧を取得します
-    // Serial.print("電源電圧: ");
-    // Serial.print(battery_value); // 電源電圧を表示します
-    if (battery_value <= 160) {
-      if (currentMillis - previousBlinkMillis >= blinkInterval) {
-        previousBlinkMillis = currentMillis; // 前回の点滅時間を更新します
-        ledState = !ledState; // LEDの状態を反転します
-        ledcWrite(ledLedChannel, ledState ? 150 : 10); // LEDを点滅させます
-      }
+    Serial.print("電源電圧: ");
+    Serial.print(battery_value); // 電源電圧を表示します
+    Serial.println(" mV");
+    if (battery_value < 330) {
+      ledcWrite(whiteLedChannel, 100); // 電源電圧が低い場合、白色LEDを最大点灯します
     } else {
-      ledcWrite(ledLedChannel, 0); // LEDCでPWM出力します
+      ledcWrite(whiteLedChannel, 0); // 電源電圧が正常な場合、白色LEDを消灯します
     }
     
     // 受信データがある場合、シリアルモニタに表示します
     if (receivedDataLength > 0) {
-      // 電圧が160以下の場合、LEDを点滅させます
-      ledcWrite(blueLedChannel, 20); // LEDCでPWM出力します
+      ledcWrite(blueLedChannel, 50); // LEDCでPWM出力します
       receivedDataLength = 0; // 受信データをクリアします
     } else {
-      ledcWrite(blueLedChannel, 0); // LEDCでPWM出力します
+      // ペアリングされていない場合の処理です (ブリージングエフェクト)
+      // 2000ms (2秒)周期で明るさを計算します
+      float rad = (millis() % 2000) / 2000.0 * 2.0 * PI;
+      // sinカーブを使い、0-255の範囲で滑らかな明るさの変化を生成します
+      int brightness = (int)((sin(rad - PI / 2.0) + 1.0) / 2.0 * 255);
+      ledcWrite(blueLedChannel, brightness);
     }
 
     slideVal1 = analogRead(ANALOG_READ1);
     slideVal2 = analogRead(ANALOG_READ2);
-    Serial.print(slideVal1);
-    Serial.print(",");
-    Serial.println(slideVal2);
+    // Serial.print(slideVal1);
+    // Serial.print(",");
+    // Serial.println(slideVal2);
     if (espNowManager.isPaired) {
       // データを送信します
       sendData.slideVal1 = map(slideVal1, 0, 4095, 0, 255);
@@ -152,7 +153,12 @@ void loop() {
       }
     } else {
       Serial.println("ペアリング待機中です...");
-      ledcWrite(blueLedChannel, 0); // LEDを消灯します
+      // ペアリングされていない場合の処理です (ブリージングエフェクト)
+      // 2000ms (2秒)周期で明るさを計算します
+      float rad = (millis() % 2000) / 2000.0 * 2.0 * PI;
+      // sinカーブを使い、0-255の範囲で滑らかな明るさの変化を生成します
+      int brightness = (int)((sin(rad - PI / 2.0) + 1.0) / 2.0 * 255);
+      ledcWrite(blueLedChannel, brightness);
     }
   }
 }
@@ -189,13 +195,22 @@ void initializeLEDPins() {
   const int freq = 5000, resolution = 8; // PWMの設定です
   ledcSetup(blueLedChannel, freq, resolution);
   ledcAttachPin(BLE_LED, blueLedChannel);
-  ledcSetup(ledLedChannel, freq, resolution);
-  ledcAttachPin(LED_LED, ledLedChannel);
+  ledcSetup(whiteLedChannel, freq, resolution);
+  ledcAttachPin(WHITE_LED, whiteLedChannel);
 }
 
 // 電源電圧を取得します
 int getVoltage() {
-  int adc_value = analogRead(BATTERY_READ); // ADCで値を読み取ります
-  const int R1 = 10000, R2 = 10000;
-  return (adc_value * 3.3 / 4095.0 * (R1 + R2) / R2) * 100; // 電圧を計算して返します
+  int voltage_value = analogRead(BATTERY);
+  // 分圧抵抗の値 (実際の回路に合わせてください)
+  const int R1 = 10000;
+  const int R2 = 20000;
+
+  // 電圧を計算します (ESP32のADCは3.3V基準、12bit分解能(0-4095))
+  // 計算式: Vout = Vin * R2 / (R1 + R2) -> Vin = Vout * (R1 + R2) / R2
+  // Vout = analogRead値 * 3.3 / 4095.0
+  // 注意: ESP32のADC基準電圧は内部で変動することがあるため、より正確な測定にはキャリブレーションが必要です。
+  double voltage = (voltage_value * 3.3 / 4095.0) * (double)(R1 + R2) / R2;
+
+  return (int)(voltage * 100);
 }
