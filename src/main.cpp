@@ -37,7 +37,7 @@ struct ReceivedDataPacket {
 
 // 送信完了時のコールバック関数です
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  // 送信ステータスをシリアルモニタに表示します
+// 送信ステータスをシリアルモニタに表示します
 # if 0
   Serial.print("送信ステータス:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
@@ -105,44 +105,30 @@ void loop() {
       ledcWrite(whiteLedChannel, 0); // 電源電圧が正常な場合、白色LEDを消灯します
     }
     
-    // 受信データがある場合、シリアルモニタに表示します
     if (receivedDataLength > 0) {
       ledcWrite(blueLedChannel, 50); // LEDCでPWM出力します
       receivedDataLength = 0; // 受信データをクリアします
     } else {
       // ペアリングされていない場合の処理です (ブリージングエフェクト)
-      // 2000ms (2秒)周期で明るさを計算します
       float rad = (millis() % 2000) / 2000.0 * 2.0 * PI;
-      // sinカーブを使い、0-255の範囲で滑らかな明るさの変化を生成します
       int brightness = (int)((sin(rad - PI / 2.0) + 1.0) / 2.0 * 255);
       ledcWrite(blueLedChannel, brightness);
     }
 
     slideVal1 = analogRead(ANALOG_READ1);
     slideVal2 = analogRead(ANALOG_READ2);
-    // Serial.print(slideVal1);
-    // Serial.print(",");
-    // Serial.println(slideVal2);
+    // ペアリングされている場合、データを送信します
     if (espNowManager.isPaired) {
-      // データを送信します
       sendData.slideVal1 = map(slideVal1, 0, 4095, 0, 255);
       sendData.slideVal2 = map(slideVal2, 0, 4095, 0, 255);
-      sendData.sld_sw1_1 = digitalRead(SLD_SW1_1);
-      sendData.sld_sw1_2 = digitalRead(SLD_SW1_2);
-      sendData.sld_sw2_1 = digitalRead(SLD_SW2_1);
-      sendData.sld_sw2_2 = digitalRead(SLD_SW2_2);
-      sendData.sld_sw3_1 = digitalRead(SLD_SW3_1);
-      sendData.sld_sw3_2 = digitalRead(SLD_SW3_2);
-      sendData.sld_sw4_1 = digitalRead(SLD_SW4_1);
-      sendData.sld_sw4_2 = digitalRead(SLD_SW4_2);
-      sendData.sw1 = digitalRead(SW1);
-      sendData.sw2 = digitalRead(SW2);
-      sendData.sw3 = digitalRead(SW3);
-      sendData.sw4 = digitalRead(SW4);
-      sendData.sw5 = digitalRead(SW5);
-      sendData.sw6 = digitalRead(SW6);
-      sendData.sw7 = digitalRead(SW7);
-      sendData.sw8 = digitalRead(SW8);
+      sendData.sld_sw1_1 = digitalRead(SLD_SW1_1);sendData.sld_sw1_2 = digitalRead(SLD_SW1_2);
+      sendData.sld_sw2_1 = digitalRead(SLD_SW2_1);sendData.sld_sw2_2 = digitalRead(SLD_SW2_2);
+      sendData.sld_sw3_1 = digitalRead(SLD_SW3_1);sendData.sld_sw3_2 = digitalRead(SLD_SW3_2);
+      sendData.sld_sw4_1 = digitalRead(SLD_SW4_1);sendData.sld_sw4_2 = digitalRead(SLD_SW4_2);
+      sendData.sw1 = digitalRead(SW1);sendData.sw2 = digitalRead(SW2);
+      sendData.sw3 = digitalRead(SW3);sendData.sw4 = digitalRead(SW4);
+      sendData.sw5 = digitalRead(SW5);sendData.sw6 = digitalRead(SW6);
+      sendData.sw7 = digitalRead(SW7);sendData.sw8 = digitalRead(SW8);
 
       // データを送信します
       esp_err_t result = esp_now_send(sender_mac, (uint8_t *)&sendData, sizeof(sendData));
@@ -154,9 +140,7 @@ void loop() {
     } else {
       Serial.println("ペアリング待機中です...");
       // ペアリングされていない場合の処理です (ブリージングエフェクト)
-      // 2000ms (2秒)周期で明るさを計算します
       float rad = (millis() % 2000) / 2000.0 * 2.0 * PI;
-      // sinカーブを使い、0-255の範囲で滑らかな明るさの変化を生成します
       int brightness = (int)((sin(rad - PI / 2.0) + 1.0) / 2.0 * 255);
       ledcWrite(blueLedChannel, brightness);
     }
@@ -166,24 +150,15 @@ void loop() {
 /* 関数 */
 // ピンモードを設定します
 void initializePins() {
-  pinMode(SW1, INPUT_PULLUP);
-  pinMode(SW2, INPUT_PULLUP);
-  pinMode(SW3, INPUT_PULLUP);
-  pinMode(SW4, INPUT_PULLUP);
-  pinMode(SW5, INPUT_PULLUP);
-  pinMode(SW6, INPUT_PULLUP);
-  pinMode(SW7, INPUT_PULLUP);
-  pinMode(SW8, INPUT_PULLUP);
-  pinMode(SLD_SW1_1, INPUT_PULLUP);
-  pinMode(SLD_SW1_2, INPUT_PULLUP);
-  pinMode(SLD_SW2_1, INPUT_PULLUP);
-  pinMode(SLD_SW2_2, INPUT_PULLUP);
-  pinMode(SLD_SW3_1, INPUT_PULLUP);
-  pinMode(SLD_SW3_2, INPUT_PULLUP);
-  pinMode(SLD_SW4_1, INPUT_PULLUP);
-  pinMode(SLD_SW4_2, INPUT_PULLUP);
-  pinMode(ANALOG_READ1, INPUT);
-  pinMode(ANALOG_READ2, INPUT);
+  pinMode(SW1, INPUT_PULLUP);pinMode(SW2, INPUT_PULLUP);
+  pinMode(SW3, INPUT_PULLUP);pinMode(SW4, INPUT_PULLUP);
+  pinMode(SW5, INPUT_PULLUP);pinMode(SW6, INPUT_PULLUP);
+  pinMode(SW7, INPUT_PULLUP);pinMode(SW8, INPUT_PULLUP);
+  pinMode(SLD_SW1_1, INPUT_PULLUP);pinMode(SLD_SW1_2, INPUT_PULLUP);
+  pinMode(SLD_SW2_1, INPUT_PULLUP);pinMode(SLD_SW2_2, INPUT_PULLUP);
+  pinMode(SLD_SW3_1, INPUT_PULLUP);pinMode(SLD_SW3_2, INPUT_PULLUP);
+  pinMode(SLD_SW4_1, INPUT_PULLUP);pinMode(SLD_SW4_2, INPUT_PULLUP);
+  pinMode(ANALOG_READ1, INPUT);pinMode(ANALOG_READ2, INPUT);
   // アナログピンの設定をします
   analogSetPinAttenuation(ANALOG_READ1, ADC_11db); // ANALOG_READ1の減衰設定をします
   analogSetPinAttenuation(ANALOG_READ2, ADC_11db); // ANALOG_READ2の減衰設定をします
