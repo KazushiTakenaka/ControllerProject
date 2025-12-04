@@ -136,14 +136,11 @@ void handleLed() {
   if (receivedDataLength > 0) {
     ledcWrite(BLUE_LED_CHANNEL, RECEIVED_LED_BRIGHTNESS);
     receivedDataLength = 0; // 受信データをクリア
-  } else if (!espNowManager.isPaired) {
-    // ペアリングされていない場合の処理 (ブリージングエフェクト)
+  } else {
+    // データ受信がない場合は、ペアリング状態に関わらずブリージングエフェクト
     float rad = (millis() % BREATHING_EFFECT_PERIOD) / (float)BREATHING_EFFECT_PERIOD * 2.0 * PI;
     int brightness = (int)((sin(rad - PI / 2.0) + 1.0) / 2.0 * 255);
     ledcWrite(BLUE_LED_CHANNEL, brightness);
-  } else {
-    // ペアリング済みでデータ受信がない場合は消灯
-    ledcWrite(BLUE_LED_CHANNEL, 0);
   }
 }
 
